@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres-sql-wac
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: whatsapp_clone
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - whatsapp-clone
+    restart: unless-stopped
+
+  keycloak_db:
+    image: postgres:latest
+    container_name: keycloak-db
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+      POSTGRES_DB: keycloak
+    volumes:
+      - keycloak_db:/var/lib/postgresql/data
+    networks:
+      - whatsapp-clone
+    restart: unless-stopped
+
+# Serveur Keycloak
+  keycloak:
+    container_name: keycloak-wac
+    image: quay.io/keycloak/keycloak:26.0.0
+    ports:
+      - 9090:8080
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+    networks:
+      - whatsapp-clone
+    command:
+      - "start-dev"
+    depends_on:
+      - keycloak_db
+    restart: unless-stopped
+
+
+  whatsapp_api:
+    container_name: whatsapp-api
+    image: whatsapp_clone/whatsapp_clone:1.0.0
+    ports:
+      - 8080:8080
+    networks:
+      - whatsapp-clone
+    depends_on:
+      - postgres
+
+  whatsapp_ui:
+    container_name: whatsapp-ui
+    image: whatsapp_clone_ui/whatsapp_clone_ui:1.0.0
+    ports:
+      - 4200:80
+    networks:
+      - whatsapp-clone
+    depends_on:
+      - whatsapp_api
+
+
+
+
+networks:
+  whatsapp-clone:
+    driver: bridge
+
+volumes:
+  postgres:
+    driver: local
+  keycloak_db:
+    driver: local

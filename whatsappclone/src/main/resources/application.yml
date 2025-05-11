@@ -1,0 +1,47 @@
+spring:
+  profiles:
+    active: dev
+
+  datasource:
+    # 🛠️ Remplace "localhost" par "postgres" (nom du service Docker)
+    url: jdbc:postgresql://postgres:5432/whatsapp_clone
+    username: username
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # 🛠️ Le backend communique avec Keycloak dans le réseau Docker => utilise "keycloak" et pas "localhost"
+          issuer-uri: http://keycloak:8080/realms/whatsapp-clone
+
+keycloak:
+  realm: whatsapp-clone    # ✅ Corrigé : "whasapp" → "whatsapp"
+  auth-server-url: http://keycloak:8080
+  resource: whatsapp-backend
+
+# ✅ Correction du mauvais type MIME + section déplacée
+springdoc:
+  default-produces-media-type: application/json
+
+application:
+  file:
+    uploads:
+      media-output-path: ./uploads
+
+servlet:
+  multipart:
+    max-file-size: 50MB
